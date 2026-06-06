@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific
+models/
+output/
+data/raw/
+*.zip
+*.pth
+*.pt
+*.pkl
+*.onnx
