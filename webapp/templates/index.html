@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <span class="eyebrow">Computer Vision &middot; Industrial AI</span>
+            <h1>Railway Track Defect Detection</h1>
+            <p class="lead">A real-time inspection system that automatically detects and localizes defects in railway track videos using a deep-learning object detector.</p>
+            <div class="hero-actions">
+            <a href="/detection" class="btn btn-primary">Try Video Detection &rarr;</a>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-card"><div class="value">{{ classes|length }}</div><div class="label">Defect Classes</div></div>
+            <div class="stat-card"><div class="value">YOLOv8</div><div class="label">Detector</div></div>
+            <div class="stat-card"><div class="value">~25ms</div><div class="label">Per-frame</div></div>
+        </div>
+    </div>
+</section>
+
+<section class="block">
+    <h2 class="section-title">The Problem</h2>
+    <div class="cards-3">
+        <div class="card">
+            <div class="card-icon">&#9888;&#65039;</div>
+            <h3>Safety Risk</h3>
+            <p>Undetected track defects cause derailments, infrastructure damage, and passenger injuries. Manual inspection is slow and inconsistent.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">&#128338;</div>
+            <h3>Slow Inspection</h3>
+            <p>Traditional human inspections cover only a few kilometers per day, leaving the network vulnerable between surveys.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">&#128181;</div>
+            <h3>High Cost</h3>
+            <p>Delays in defect detection lead to expensive emergency repairs, line closures, and liability claims.</p>
+        </div>
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">The Solution</h2>
+    <div class="cards-2">
+        <div class="card">
+            <h3>&#127909; Video-Based Detection</h3>
+            <p>Upload a track inspection video. The system processes every frame with a YOLOv8 model and draws bounding boxes on each defect in real time.</p>
+            <a href="/detection" class="btn btn-outline btn-sm">Launch &rarr;</a>
+        </div>
+        <div class="card">
+            <h3>&#128202; Inspection Analytics</h3>
+            <p>Per-frame defect count, type distribution, severity classification (Low / Medium / High), and a downloadable annotated video for reports.</p>
+        </div>
+        <div class="card">
+            <h3>&#128202; Inspection Analytics</h3>
+            <p>Per-frame defect count, type distribution, severity classification (Low / Medium / High), and a downloadable annotated video for reports.</p>
+        </div>
+    </div>
+</section>
+
+<section class="block">
+    <h2 class="section-title">Tech Stack</h2>
+    <div class="tech-grid">
+        <div class="tech"><div class="tech-name">PyTorch</div><div class="tech-desc">Deep-learning framework</div></div>
+        <div class="tech"><div class="tech-name">YOLOv8</div><div class="tech-desc">Real-time object detection</div></div>
+        <div class="tech"><div class="tech-name">FastAPI</div><div class="tech-desc">Web backend</div></div>
+        <div class="tech"><div class="tech-name">Jinja2</div><div class="tech-desc">HTML templates</div></div>
+        <div class="tech"><div class="tech-name">OpenCV</div><div class="tech-desc">Video I/O &amp; frame ops</div></div>
+        <div class="tech"><div class="tech-name">Pillow</div><div class="tech-desc">Image processing</div></div>
+        <div class="tech"><div class="tech-name">Roboflow</div><div class="tech-desc">Dataset download</div></div>
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">Dataset</h2>
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <h3>Railway Track Surface Defects Dataset</h3>
+                <p style="color:var(--text-muted);font-size:0.9rem;">Roboflow Universe — Object Detection (v11)</p>
+                <ul class="dataset-list">
+                    <li><strong>2,644</strong> annotated images (2,319 train / 325 val)</li>
+                    <li><strong>7</strong> defect classes: Cracks, Flakings, Grooves, Joint, Shellings, Spallings, Squats</li>
+                    <li>YOLOv8 bounding box format</li>
+                    <li>CC BY 4.0</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="block">
+    <h2 class="section-title">How It Works</h2>
+    <div class="pipeline">
+        <div class="step"><div class="step-num">1</div><div class="step-label">Upload Video</div><div class="step-desc">User drops an .mp4 inspection video into the browser.</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><div class="step-num">2</div><div class="step-label">Frame Extraction</div><div class="step-desc">OpenCV decodes each frame at native FPS.</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><div class="step-num">3</div><div class="step-label">YOLOv8 Inference</div><div class="step-desc">YOLOv8s predicts bounding boxes + class for each frame.</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><div class="step-num">4</div><div class="step-label">Overlay &amp; Report</div><div class="step-desc">Boxes drawn, annotated video returned, statistics computed.</div></div>
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">Citation</h2>
+    <div class="card" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+        Roboflow Universe &mdash; Railway Track Surface Defects (project-hkopa), v11, CC BY 4.0.
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}Defect Detection{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Defect Detection</h1>
+    <p>Upload a single image or a video. YOLOv8 detects and localizes defects in real time.</p>
+</div>
+
+<div id="modelError" class="result-box error" style="display:none;margin-bottom:1rem;">
+    <strong>Model not loaded.</strong> Train via <code>train_rail_surface_colab.ipynb</code> on Colab,
+    then save the resulting <code>best.pt</code> as <code>models/rail_surface_yolov8n.pt</code>.
+</div>
+
+<div class="tabs" id="modeTabs">
+    <button class="tab active" data-mode="image">&#128247; Image</button>
+    <button class="tab" data-mode="video">&#127909; Video</button>
+</div>
+
+<div class="row">
+    <div class="col col-wide">
+
+        <div class="card" id="imagePanel">
+            <h2>Image Input</h2>
+            <input type="file" id="imgInput" accept="image/*" style="display:none;">
+            <div class="upload-zone" id="imgUpload">
+                <div class="icon">&#128247;</div>
+                <p><strong>Click</strong> or <strong>drag &amp; drop</strong> an image</p>
+                <p style="font-size:0.75rem;margin-top:0.5rem;">.jpg &middot; .png &middot; .jpeg</p>
+            </div>
+            <div id="imgSettings" style="display:none;margin-top:1rem;">
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+                    <label style="font-size:0.85rem;">
+                        Confidence:
+                        <input type="number" id="imgConf" value="0.25" min="0.05" max="0.95" step="0.05" style="width:70px;padding:0.3rem;border:1px solid var(--border);border-radius:4px;">
+                        <span style="color:var(--text-muted);font-size:0.75rem;">(lower = more sensitive)</span>
+                    </label>
+                    <button class="btn btn-primary" id="imgRunBtn">Run Detection</button>
+                </div>
+            </div>
+            <div id="imgResultWrap" style="display:none;margin-top:1rem;">
+                <div class="preview-container"><img id="imgResult" alt="annotated image"></div>
+            </div>
+        </div>
+
+        <div class="card" id="videoPanel" style="display:none;">
+            <h2>Video Input</h2>
+            <input type="file" id="vidInput" accept="video/*" style="display:none;">
+            <div class="upload-zone" id="vidUpload">
+                <div class="icon">&#127909;</div>
+                <p><strong>Click</strong> or <strong>drag &amp; drop</strong> a video file</p>
+                <p style="font-size:0.75rem;margin-top:0.5rem;">.mp4 &middot; .avi &middot; .mov</p>
+            </div>
+            <div id="vidSettings" style="display:none;margin-top:1rem;">
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+                    <label style="font-size:0.85rem;">
+                        Confidence:
+                        <input type="number" id="vidConf" value="0.4" min="0.1" max="0.95" step="0.05" style="width:70px;padding:0.3rem;border:1px solid var(--border);border-radius:4px;">
+                    </label>
+                    <label style="font-size:0.85rem;">
+                        Frame stride:
+                        <input type="number" id="vidStride" value="1" min="1" max="10" step="1" style="width:70px;padding:0.3rem;border:1px solid var(--border);border-radius:4px;">
+                        <span style="color:var(--text-muted);font-size:0.75rem;">(higher = faster)</span>
+                    </label>
+                    <button class="btn btn-primary" id="vidRunBtn">Run Detection</button>
+                </div>
+            </div>
+            <div id="vidResultWrap" style="display:none;margin-top:1rem;">
+                <video id="vidResult" controls style="width:100%;border-radius:6px;background:#000;"></video>
+                <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <a id="vidDownload" class="btn btn-outline" download="annotated.mp4">Download annotated video</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col col-narrow">
+        <div class="card">
+            <h2>Defect Classes</h2>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem;">Railway Track Surface Defects (7 classes):</p>
+            <ul class="class-legend">
+                <li><span class="dot" style="background:#e94560"></span>Cracks</li>
+                <li><span class="dot" style="background:#0f3460"></span>Flakings</li>
+                <li><span class="dot" style="background:#00b894"></span>Grooves</li>
+                <li><span class="dot" style="background:#fdcb6e"></span>Joint</li>
+                <li><span class="dot" style="background:#6c5ce7"></span>Shellings</li>
+                <li><span class="dot" style="background:#e17055"></span>Spallings</li>
+                <li><span class="dot" style="background:#0984e3"></span>Squats</li>
+            </ul>
+        </div>
+
+        <div class="card" id="imgSummary" style="display:none;">
+            <h2>Image Detections</h2>
+            <div class="result-box info" id="imgCount" style="font-weight:700;font-size:1rem;text-align:center;padding:0.6rem;">0</div>
+            <div id="imgList" style="margin-top:0.75rem;"></div>
+        </div>
+
+        <div class="card" id="vidSummary" style="display:none;">
+            <h2>Video Summary</h2>
+            <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="stat-card"><div class="value" id="vidTotal">0</div><div class="label">Total defects</div></div>
+                <div class="stat-card"><div class="value" id="vidFrames">0</div><div class="label">Frames processed</div></div>
+                <div class="stat-card"><div class="value" id="vidFps">0</div><div class="label">FPS</div></div>
+                <div class="stat-card"><div class="value" id="vidElapsed">0s</div><div class="label">Inference time</div></div>
+            </div>
+            <div style="margin-top:1rem;">
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.4rem;">Severity</div>
+                <div id="vidSeverity" class="result-box info" style="text-align:center;font-weight:700;font-size:1rem;padding:0.6rem;">—</div>
+            </div>
+        </div>
+
+        <div class="card" id="histCard" style="display:none;">
+            <h2>Defect Type Distribution</h2>
+            <canvas id="histChart" width="320" height="220"></canvas>
+        </div>
+
+        <div class="card" id="timelineCard" style="display:none;">
+            <h2>Defect Timeline</h2>
+            <canvas id="timelineChart" width="320" height="160"></canvas>
+        </div>
+    </div>
+</div>
+
+<div id="progressCard" class="card" style="display:none;">
+    <div id="progressText" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Processing...</div>
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const TABS = document.querySelectorAll('#modeTabs .tab');
+const imagePanel = document.getElementById('imagePanel');
+const videoPanel = document.getElementById('videoPanel');
+const imgSummary = document.getElementById('imgSummary');
+const vidSummary = document.getElementById('vidSummary');
+
+TABS.forEach(t => t.addEventListener('click', () => {
+    TABS.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const mode = t.dataset.mode;
+    imagePanel.style.display = (mode === 'image') ? 'block' : 'none';
+    videoPanel.style.display  = (mode === 'video') ? 'block' : 'none';
+    imgSummary.style.display = (mode === 'image' && document.getElementById('imgResultWrap').style.display !== 'none') ? 'block' : 'none';
+    vidSummary.style.display = (mode === 'video' && document.getElementById('vidResultWrap').style.display !== 'none') ? 'block' : 'none';
+}));
+
+fetch('/api/model/status').then(r => r.json()).then(s => {
+    if (!s.yolo_detection) document.getElementById('modelError').style.display = 'block';
+});
+
+// ---------- IMAGE ----------
+const imgInput = document.getElementById('imgInput');
+const imgUpload = document.getElementById('imgUpload');
+const imgSettings = document.getElementById('imgSettings');
+const imgRunBtn = document.getElementById('imgRunBtn');
+const imgResult = document.getElementById('imgResult');
+const imgResultWrap = document.getElementById('imgResultWrap');
+const imgCount = document.getElementById('imgCount');
+const imgList = document.getElementById('imgList');
+let currentImage = null;
+
+imgUpload.addEventListener('click', () => imgInput.click());
+imgUpload.addEventListener('dragover', e => { e.preventDefault(); imgUpload.classList.add('dragover'); });
+imgUpload.addEventListener('dragleave', () => imgUpload.classList.remove('dragover'));
+imgUpload.addEventListener('drop', e => {
+    e.preventDefault();
+    imgUpload.classList.remove('dragover');
+    if (e.dataTransfer.files.length) loadImg(e.dataTransfer.files[0]);
+});
+imgInput.addEventListener('change', e => { if (e.target.files.length) loadImg(e.target.files[0]); });
+
+function loadImg(f) {
+    if (!f.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+    currentImage = f;
+    imgResult.src = URL.createObjectURL(f);
+    imgResultWrap.style.display = 'block';
+    imgSettings.style.display = 'block';
+    imgSummary.style.display = 'block';
+    imgCount.textContent = '— running —';
+    imgList.innerHTML = '';
+}
+
+imgRunBtn.addEventListener('click', async () => {
+    if (!currentImage) return;
+    const conf = parseFloat(document.getElementById('imgConf').value) || 0.3;
+    const fd = new FormData();
+    fd.append('file', currentImage);
+    fd.append('conf', conf);
+    imgRunBtn.disabled = true;
+    imgCount.textContent = 'Running…';
+    try {
+        const r = await fetch('/api/detect/image', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.error) { alert(d.error); imgCount.textContent = 'Error'; return; }
+        imgResult.src = 'data:image/jpeg;base64,' + d.image_b64;
+        imgCount.textContent = `${d.detections.length} defect(s) found`;
+        if (d.detections.length === 0) {
+            imgList.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">No defects above the confidence threshold. Try lowering the confidence slider.</p>';
+        } else {
+            imgList.innerHTML = '<table style="width:100%;font-size:0.85rem;">' +
+                '<thead><tr><th>Class</th><th>Conf.</th></tr></thead><tbody>' +
+                d.detections.map(x => `<tr><td>${x.class}</td><td>${(x.confidence * 100).toFixed(1)}%</td></tr>`).join('') +
+                '</tbody></table>';
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+        imgCount.textContent = 'Error';
+    } finally {
+        imgRunBtn.disabled = false;
+    }
+});
+
+// ---------- VIDEO ----------
+const vidInput = document.getElementById('vidInput');
+const vidUpload = document.getElementById('vidUpload');
+const vidSettings = document.getElementById('vidSettings');
+const vidRunBtn = document.getElementById('vidRunBtn');
+const vidResult = document.getElementById('vidResult');
+const vidResultWrap = document.getElementById('vidResultWrap');
+const vidDownload = document.getElementById('vidDownload');
+const progressCard = document.getElementById('progressCard');
+let currentVideo = null;
+
+vidUpload.addEventListener('click', () => vidInput.click());
+vidUpload.addEventListener('dragover', e => { e.preventDefault(); vidUpload.classList.add('dragover'); });
+vidUpload.addEventListener('dragleave', () => vidUpload.classList.remove('dragover'));
+vidUpload.addEventListener('drop', e => {
+    e.preventDefault();
+    vidUpload.classList.remove('dragover');
+    if (e.dataTransfer.files.length) loadVid(e.dataTransfer.files[0]);
+});
+vidInput.addEventListener('change', e => { if (e.target.files.length) loadVid(e.target.files[0]); });
+
+function loadVid(f) {
+    if (!f.type.startsWith('video/')) { alert('Please select a video file.'); return; }
+    currentVideo = f;
+    const url = URL.createObjectURL(f);
+    vidResult.src = url;
+    vidResult.muted = true;
+    vidResultWrap.style.display = 'block';
+    vidSettings.style.display = 'block';
+    vidSummary.style.display = 'block';
+    document.getElementById('histCard').style.display = 'none';
+    document.getElementById('timelineCard').style.display = 'none';
+}
+
+vidRunBtn.addEventListener('click', async () => {
+    if (!currentVideo) return;
+    const conf = parseFloat(document.getElementById('vidConf').value) || 0.4;
+    const stride = parseInt(document.getElementById('vidStride').value) || 1;
+    const fd = new FormData();
+    fd.append('file', currentVideo);
+    fd.append('conf', conf);
+    fd.append('stride', stride);
+
+    vidRunBtn.disabled = true;
+    progressCard.style.display = 'block';
+    document.getElementById('progressText').textContent = 'Uploading + processing video (this may take a few seconds)...';
+    document.getElementById('progressFill').style.width = '30%';
+
+    try {
+        const r = await fetch('/api/detect/video', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.error) { alert(d.error); return; }
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressText').textContent = 'Done!';
+
+        const url = 'data:video/mp4;base64,' + d.video_b64;
+        vidResult.src = url;
+        vidResult.load();
+        vidDownload.href = url;
+        vidResultWrap.style.display = 'block';
+
+        document.getElementById('vidTotal').textContent = d.total_defects;
+        document.getElementById('vidFrames').textContent = d.processed_frames;
+        document.getElementById('vidFps').textContent = d.fps;
+        document.getElementById('vidElapsed').textContent = d.elapsed_sec + 's';
+        const sev = d.severity;
+        const sevEl = document.getElementById('vidSeverity');
+        sevEl.textContent = sev;
+        sevEl.className = 'result-box info';
+        drawHistogram(d.histogram);
+        drawTimeline(d.timeline);
+        document.getElementById('histCard').style.display = 'block';
+        document.getElementById('timelineCard').style.display = 'block';
+    } catch (e) {
+        alert('Error: ' + e.message);
+    } finally {
+        vidRunBtn.disabled = false;
+        setTimeout(() => { progressCard.style.display = 'none'; }, 1500);
+    }
+});
+
+function drawHistogram(hist) {
+    const c = document.getElementById('histChart');
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    const entries = Object.entries(hist).sort((a, b) => b[1] - a[1]);
+    if (entries.length === 0) { ctx.fillStyle = '#999'; ctx.fillText('No defects', 10, 20); return; }
+    const max = Math.max(...entries.map(e => e[1]));
+    const barH = 18, gap = 4, labelW = 130, valW = 32;
+    const chartW = c.width - labelW - valW - 8;
+    const colors = ['#e94560','#0f3460','#00b894','#fdcb6e','#6c5ce7','#e17055','#0984e3','#a29bfe','#ff6b6b','#48dbfb','#1dd1a1','#f3722c','#5f27d7'];
+    ctx.font = '11px Inter, sans-serif';
+    entries.forEach(([name, count], i) => {
+        const y = i * (barH + gap);
+        ctx.fillStyle = '#2d3436';
+        const lbl = name.length > 18 ? name.slice(0, 16) + '…' : name;
+        ctx.fillText(lbl, 4, y + 13);
+        const w = (count / max) * chartW;
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fillRect(labelW, y, w, barH);
+        ctx.fillStyle = '#2d3436';
+        ctx.fillText(count, labelW + w + 4, y + 13);
+    });
+    c.height = entries.length * (barH + gap) + 4;
+}
+
+function drawTimeline(timeline) {
+    const c = document.getElementById('timelineChart');
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    if (timeline.length === 0) { ctx.fillStyle = '#999'; ctx.fillText('No timeline data', 10, 20); return; }
+    const maxCount = Math.max(...timeline.map(t => t.count), 1);
+    const pad = 20;
+    const w = c.width - pad * 2, h = c.height - pad * 2;
+    ctx.strokeStyle = '#dfe6e9';
+    ctx.beginPath();
+    ctx.moveTo(pad, pad);
+    ctx.lineTo(pad, c.height - pad);
+    ctx.lineTo(c.width - pad, c.height - pad);
+    ctx.stroke();
+    ctx.fillStyle = '#0f3460';
+    ctx.beginPath();
+    timeline.forEach((t, i) => {
+        const x = pad + (i / Math.max(timeline.length - 1, 1)) * w;
+        const y = c.height - pad - (t.count / maxCount) * h;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(15,52,96,0.15)';
+    ctx.lineTo(pad + w, c.height - pad);
+    ctx.lineTo(pad, c.height - pad);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#636e72';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.fillText('Frames →', c.width - 60, c.height - 4);
+    ctx.fillText('Defects', 4, 14);
+}
+</script>
+{% endblock %}

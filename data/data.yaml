@@ -1,0 +1,18 @@
+names:
+- Cracks
+- Flakings
+- Grooves
+- Joint
+- Shellings
+- Spallings
+- Squats
+nc: 7
+roboflow:
+  license: CC BY 4.0
+  project: railway-track-surface-defects-m5e4e
+  url: https://universe.roboflow.com/project-hkopa/railway-track-surface-defects-m5e4e/dataset/11
+  version: 11
+  workspace: project-hkopa
+test: ../test/images
+train: ../train/images
+val: ../valid/images

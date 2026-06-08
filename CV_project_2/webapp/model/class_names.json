@@ -1,0 +1,17 @@
+[
+  "broken_rail_high",
+  "broken_rail_low",
+  "broken_rail_medium",
+  "corrosion_high",
+  "corrosion_low",
+  "corrosion_medium",
+  "head_checks_high",
+  "head_checks_low",
+  "head_checks_medium",
+  "railway_join_bar_defects_high",
+  "railway_join_bar_defects_low",
+  "railway_join_bar_defects_medium",
+  "squats_high",
+  "squats_low",
+  "squats_medium"
+]
