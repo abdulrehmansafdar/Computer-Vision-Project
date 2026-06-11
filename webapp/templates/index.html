@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <span class="eyebrow">Computer Vision &middot; Industrial AI</span>
+            <h1>Wood Surface Defect Detection</h1>
+            <p class="lead">A real-time inspection system that automatically detects and localizes defects in wood surfaces using a deep-learning object detector.</p>
+            <div class="hero-actions">
+            <a href="/detection" class="btn btn-primary">Try Detection &rarr;</a>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-card"><div class="value">{{ classes|length }}</div><div class="label">Defect Classes</div></div>
+            <div class="stat-card"><div class="value">YOLOv8</div><div class="label">Detector</div></div>
+            <div class="stat-card"><div class="value">~25ms</div><div class="label">Per-frame</div></div>
+        </div>
+    </div>
+</section>
+
+<section class="block">
+    <h2 class="section-title">The Problem</h2>
+    <div class="cards-3">
+        <div class="card">
+            <div class="card-icon">&#9888;&#65039;</div>
+            <h3>Quality Risk</h3>
+            <p>Undetected wood defects lead to structural failures, wasted material, and costly customer returns. Manual inspection is slow and subjective.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">&#128338;</div>
+            <h3>Slow Inspection</h3>
+            <p>Human inspectors can only examine a limited volume per shift, creating bottlenecks in production and leaving defects undetected.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">&#128181;</div>
+            <h3>High Cost</h3>
+            <p>Missed defects result in expensive rework, rejected shipments, and damage to brand reputation in the wood products industry.</p>
+        </div>
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">The Solution</h2>
+    <div class="cards-2">
+        <div class="card">
+            <h3>&#127909; Image-Based Detection</h3>
+            <p>Upload a wood surface image. The system processes it with a YOLOv8 model and draws bounding boxes on each defect in real time.</p>
+            <a href="/detection" class="btn btn-outline btn-sm">Launch &rarr;</a>
+        </div>
+        <div class="card">
+            <h3>&#128202; Defect Analytics</h3>
+            <p>Per-image defect count, type distribution, and confidence scores — all presented in an intuitive dashboard for quality control decisions.</p>
+        </div>
+    </div>
+</section>
+
+<section class="block">
+    <h2 class="section-title">Tech Stack</h2>
+    <div class="tech-grid">
+        <div class="tech"><div class="tech-name">PyTorch</div><div class="tech-desc">Deep-learning framework</div></div>
+        <div class="tech"><div class="tech-name">YOLOv8</div><div class="tech-desc">Real-time object detection</div></div>
+        <div class="tech"><div class="tech-name">FastAPI</div><div class="tech-desc">Web backend</div></div>
+        <div class="tech"><div class="tech-name">Jinja2</div><div class="tech-desc">HTML templates</div></div>
+        <div class="tech"><div class="tech-name">OpenCV</div><div class="tech-desc">Image I/O &amp; processing</div></div>
+        <div class="tech"><div class="tech-name">Pillow</div><div class="tech-desc">Image processing</div></div>
+        <div class="tech"><div class="tech-name">Kaggle</div><div class="tech-desc">Dataset source</div></div>
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">Dataset</h2>
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <h3>Large Scale Wood Surface Defects Dataset</h3>
+                <p style="color:var(--text-muted);font-size:0.9rem;">Kaggle — nomihsa965</p>
+                <ul class="dataset-list">
+                    <li><strong>4,000</strong> annotated images (3,200 train / 400 val / 400 test)</li>
+                    <li><strong>8</strong> defect classes: Quartzity, Live_Knot, Marrow, Resin, Dead_Knot, Knot_with_crack, Knot_missing, Crack</li>
+                    <li>YOLOv8 bounding box format</li>
+                    <li>2800x1024 resolution</li>
+                    <li>CC BY 4.0</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="block">
+    <h2 class="section-title">How It Works</h2>
+    <div class="pipeline">
+        <div class="step"><div class="step-num">1</div><div class="step-label">Upload Image</div><div class="step-desc">User drops a wood surface image into the browser.</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><div class="step-num">2</div><div class="step-label">Preprocessing</div><div class="step-desc">Image is resized and normalized for YOLOv8 inference.</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><div class="step-num">3</div><div class="step-label">YOLOv8 Inference</div><div class="step-desc">YOLOv8n predicts bounding boxes + class for each defect.</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><div class="step-num">4</div><div class="step-label">Overlay &amp; Report</div><div class="step-desc">Boxes drawn, annotated image returned, statistics computed.</div></div>
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">Training</h2>
+    <div class="card" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+        Trained with YOLOv8n (nano) on Google Colab T4 GPU for 20 epochs with class-aware augmentation
+        on minority classes (Quartzity, Marrow, Knot_missing). See
+        <code>notebooks/wood_defect_yolov8_training.ipynb</code> for details.
+    </div>
+</section>
+
+<section class="block alt">
+    <h2 class="section-title">Citation</h2>
+    <div class="card" style="font-size:0.85rem;color:var(--text-muted);line-height:1.7;">
+        Kodytek P, Bodzas A and Bilik P. A large-scale image dataset of wood surface defects for automated vision-based quality control processes. F1000Research 2022, 10:581.
+    </div>
+</section>
+
+{% endblock %}

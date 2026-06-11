@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}Annotator{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Annotator</h1>
+    <p>Draw bounding boxes on railway track images &rarr; COCO JSON</p>
+</div>
+
+<div id="uploadZone" class="upload-zone" style="margin-bottom:1rem;">
+    <div class="icon">&#128247;</div>
+    <p><strong>Select Files</strong> or <strong>Select Folder</strong> to begin annotating</p>
+    <p style="font-size:0.8rem;margin-top:0.5rem;">JPEG, PNG &middot; Drag &amp; drop also supported</p>
+    <div class="upload-buttons" style="justify-content:center;margin-top:0.75rem;">
+        <button class="btn btn-primary btn-sm" id="filesBtn">Select Files</button>
+        <button class="btn btn-outline btn-sm" id="folderBtn">Select Folder</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+    <input type="file" id="folderInput" accept="image/*" webkitdirectory style="display:none;">
+</div>
+
+<div id="annoLayout" class="anno-layout" style="display:none;">
+    <div class="anno-sidebar">
+        <div class="anno-sidebar-header">
+            <span>Images</span>
+            <span id="totalCount" style="float:right;"></span>
+        </div>
+        <div class="anno-sidebar-list" id="thumbList"></div>
+    </div>
+
+    <div class="anno-canvas-area">
+        <div class="card">
+            <div class="canvas-wrapper">
+                <img id="annoImage" style="max-width:100%;display:block;">
+                <canvas id="bboxCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="card" id="annotationCard" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                <h2 style="margin:0;font-size:1rem;">Annotations <span id="annoCount" style="font-weight:400;color:var(--text-muted);font-size:0.9rem;"></span></h2>
+            </div>
+
+            <div class="anno-controls">
+                <label style="font-size:0.8rem;font-weight:600;">Class</label>
+                <select id="classSelect" style="padding:0.4rem;border:1.5px solid var(--border);border-radius:6px;font-size:0.85rem;">
+                    {% for c in classes %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-outline btn-sm" id="undoBtn">Undo</button>
+                <button class="btn btn-outline btn-sm" id="clearBtn">Clear</button>
+                <span class="nav-info" id="navInfo">1 / 1</span>
+                <button class="btn btn-outline btn-sm" id="prevBtn">&#9664; Prev</button>
+                <button class="btn btn-outline btn-sm" id="nextBtn">Next &#9654;</button>
+            </div>
+
+            <table style="margin-top:0.75rem;font-size:0.85rem;">
+                <thead><tr><th>#</th><th>Class</th><th>Box</th><th></th></tr></thead>
+                <tbody id="annoTableBody"></tbody>
+            </table>
+
+            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+                <button class="btn btn-primary" id="saveBtn">Save All to COCO JSON</button>
+                <button class="btn btn-danger btn-sm" id="clearAllBtn">Remove All Images</button>
+                <button class="btn btn-outline btn-sm" id="addMoreBtn">+ Add More</button>
+            </div>
+            <div id="saveStatus" style="margin-top:0.5rem;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const CLASSES = {{ classes | tojson }};
+const COLORS = ['#e94560','#0f3460','#00b894','#fdcb6e','#6c5ce7','#e17055','#0984e3','#d63031','#00cec9','#a29bfe'];
+
+const images = {};
+let currentKey = null;
+let nextImgId = 1;
+let nextAnnId = 1;
+let isDrawing = false, startX, startY, currentRect = null;
+let ctx = null;
+
+const els = {
+    uploadZone: document.getElementById('uploadZone'),
+    layout: document.getElementById('annoLayout'),
+    fileInput: document.getElementById('fileInput'),
+    folderInput: document.getElementById('folderInput'),
+    thumbList: document.getElementById('thumbList'),
+    totalCount: document.getElementById('totalCount'),
+    annoImage: document.getElementById('annoImage'),
+    canvas: document.getElementById('bboxCanvas'),
+    classSelect: document.getElementById('classSelect'),
+    annoCount: document.getElementById('annoCount'),
+    annoTableBody: document.getElementById('annoTableBody'),
+    navInfo: document.getElementById('navInfo'),
+    annotationCard: document.getElementById('annotationCard'),
+    saveStatus: document.getElementById('saveStatus'),
+};
+
+els.fileInput.addEventListener('change', (e) => { if(e.target.files.length) loadFiles(e.target.files); });
+els.folderInput.addEventListener('change', (e) => { if(e.target.files.length) loadFiles(e.target.files); });
+
+document.getElementById('filesBtn').addEventListener('click', () => els.fileInput.click());
+document.getElementById('folderBtn').addEventListener('click', () => els.folderInput.click());
+document.getElementById('addMoreBtn').addEventListener('click', () => els.fileInput.click());
+
+els.uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); els.uploadZone.classList.add('dragover'); });
+els.uploadZone.addEventListener('dragleave', () => els.uploadZone.classList.remove('dragover'));
+els.uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault(); els.uploadZone.classList.remove('dragover');
+    if(e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+});
+
+function loadFiles(fileList) {
+    let loaded = 0;
+    const names = Object.keys(images);
+    for (const file of fileList) {
+        if (!file.type.startsWith('image/')) continue;
+        const key = file.name + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        if (names.includes(file.name)) {
+            names.push(file.name);
+        }
+        const id = nextImgId++;
+        const reader = new FileReader();
+        reader.fileKey = key;
+        reader.fileName = file.name;
+        reader.fileId = id;
+        reader.onload = (ev) => {
+            images[ev.target.fileKey] = {
+                id: ev.target.fileId,
+                name: ev.target.fileName,
+                dataURL: ev.target.result,
+                annotations: [],
+                file: file,
+            };
+            loaded++;
+            if (loaded === fileList.length) {
+                renderSidebar();
+                if (!currentKey) switchImage(Object.keys(images)[0]);
+                els.uploadZone.style.display = 'none';
+                els.layout.style.display = 'flex';
+                els.annotationCard.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function renderSidebar() {
+    const keys = Object.keys(images);
+    els.totalCount.textContent = keys.length + ' images';
+    els.thumbList.innerHTML = keys.map(k => {
+        const img = images[k];
+        const count = img.annotations.length;
+        const active = k === currentKey ? 'active' : '';
+        return `<div class="thumb-item ${active}" data-key="${k}" onclick="switchImage('${k}')">
+            <img src="${img.dataURL}">
+            <div style="flex:1;min-width:0;">
+                <div class="thumb-label">${img.name}</div>
+                <div class="thumb-count">${count} box${count !== 1 ? 'es' : ''}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function switchImage(key) {
+    if (!key || !images[key]) return;
+    saveCurrentAnnotations();
+    currentKey = key;
+    const img = images[key];
+    els.annoImage.src = img.dataURL;
+    els.annoImage.onload = () => {
+        initCanvas();
+        renderSidebar();
+        updateNav();
+    };
+}
+
+function saveCurrentAnnotations() {
+    if (currentKey && images[currentKey]) {
+        images[currentKey].annotations = currentAnnotations();
+    }
+}
+
+function currentAnnotations() {
+    if (!currentKey) return [];
+    return images[currentKey].annotations;
+}
+
+function initCanvas() {
+    const img = images[currentKey];
+    const rect = els.annoImage.getBoundingClientRect();
+    els.canvas.width = els.annoImage.naturalWidth;
+    els.canvas.height = els.annoImage.naturalHeight;
+    els.canvas.style.width = rect.width + 'px';
+    els.canvas.style.height = rect.height + 'px';
+    ctx = els.canvas.getContext('2d');
+
+    els.canvas.onmousedown = onMouseDown;
+    els.canvas.onmousemove = onMouseMove;
+    els.canvas.onmouseup = onMouseUp;
+    els.canvas.onmouseleave = () => { isDrawing = false; };
+
+    renderAnnoList();
+    redraw();
+}
+
+function getPos(e) {
+    const rect = els.canvas.getBoundingClientRect();
+    return {
+        x: (e.clientX - rect.left) * (els.canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (els.canvas.height / rect.height),
+    };
+}
+
+function onMouseDown(e) {
+    isDrawing = true; const p = getPos(e);
+    startX = p.x; startY = p.y;
+    currentRect = { x: startX, y: startY, w: 0, h: 0 };
+}
+
+function onMouseMove(e) {
+    if (!isDrawing) return; const p = getPos(e);
+    currentRect.w = p.x - startX; currentRect.h = p.y - startY;
+    redraw();
+}
+
+function onMouseUp() {
+    if (!isDrawing || !currentRect) return;
+    isDrawing = false;
+    let b = { ...currentRect };
+    if (b.w < 0) { b.x += b.w; b.w = -b.w; }
+    if (b.h < 0) { b.y += b.h; b.h = -b.h; }
+    if (b.w > 5 && b.h > 5 && currentKey) {
+        images[currentKey].annotations.push({
+            id: nextAnnId++, class: els.classSelect.value, bbox: [b.x, b.y, b.w, b.h]
+        });
+        renderAnnoList(); renderSidebar();
+    }
+    currentRect = null; redraw();
+}
+
+function redraw() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+    const anns = currentAnnotations();
+    anns.forEach((a, i) => {
+        const [x, y, w, h] = a.bbox;
+        ctx.strokeStyle = COLORS[i % COLORS.length];
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = COLORS[i % COLORS.length];
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillText(`${a.class} #${a.id}`, x + 4, y - 6);
+    });
+    if (currentRect) {
+        ctx.strokeStyle = '#e94560'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+        ctx.strokeRect(currentRect.x, currentRect.y, currentRect.w, currentRect.h);
+        ctx.setLineDash([]);
+    }
+}
+
+function renderAnnoList() {
+    const anns = currentAnnotations();
+    els.annoCount.textContent = `(${anns.length})`;
+    els.annoTableBody.innerHTML = anns.map((a, i) =>
+        `<tr><td>${a.id}</td><td>${a.class}</td><td style="font-size:0.8rem;font-family:monospace;">[${a.bbox.map(v => Math.round(v)).join(', ')}]</td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeAnno(${i})">Delete</button></td></tr>`
+    ).join('');
+}
+
+function removeAnno(idx) {
+    if (!currentKey) return;
+    images[currentKey].annotations.splice(idx, 1);
+    renderAnnoList(); renderSidebar(); redraw();
+}
+
+function updateNav() {
+    const keys = Object.keys(images);
+    const idx = keys.indexOf(currentKey);
+    els.navInfo.textContent = `${idx + 1} / ${keys.length}`;
+}
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+    if (!currentKey) return;
+    const anns = images[currentKey].annotations;
+    if (anns.length) { anns.pop(); renderAnnoList(); renderSidebar(); redraw(); }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+    if (!currentKey) return;
+    images[currentKey].annotations = [];
+    renderAnnoList(); renderSidebar(); redraw();
+});
+
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+    if (!Object.keys(images).length) return;
+    if (!confirm('Remove all images and annotations?')) return;
+    Object.keys(images).forEach(k => delete images[k]);
+    currentKey = null; nextImgId = 1; nextAnnId = 1;
+    els.layout.style.display = 'none';
+    els.annotationCard.style.display = 'none';
+    els.uploadZone.style.display = 'block';
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+    const keys = Object.keys(images);
+    const idx = keys.indexOf(currentKey);
+    if (idx > 0) switchImage(keys[idx - 1]);
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    const keys = Object.keys(images);
+    const idx = keys.indexOf(currentKey);
+    if (idx < keys.length - 1) switchImage(keys[idx + 1]);
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+    if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+    saveCurrentAnnotations();
+    const keys = Object.keys(images);
+    if (!keys.length) return;
+
+    const coco = {
+        images: keys.map(k => {
+            const img = images[k];
+            const el = new Image();
+            el.src = img.dataURL;
+            return { id: img.id, file_name: img.name, width: el.naturalWidth || 1920, height: el.naturalHeight || 1080 };
+        }),
+        annotations: [],
+        categories: CLASSES.map((c, i) => ({ id: i + 1, name: c }))
+    };
+
+    // Set image dimensions properly using stored natural dimensions
+    // We'll use the last loaded image's dimensions as fallback
+    const imgEl = els.annoImage;
+    keys.forEach(k => {
+        const img = coco.images.find(i => i.id === images[k].id);
+        if (img) {
+            img.width = imgEl.naturalWidth || 1920;
+            img.height = imgEl.naturalHeight || 1080;
+        }
+    });
+
+    keys.forEach(k => {
+        const imgData = images[k];
+        imgData.annotations.forEach(a => {
+            coco.annotations.push({
+                id: a.id, image_id: imgData.id,
+                category_id: CLASSES.indexOf(a.class) + 1,
+                bbox: a.bbox, area: a.bbox[2] * a.bbox[3], iscrowd: 0
+            });
+        });
+    });
+
+    const btn = document.getElementById('saveBtn');
+    const status = document.getElementById('saveStatus');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const fd = new FormData();
+    fd.append('data', JSON.stringify(coco));
+    fetch('/api/annotations/save', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(d => { status.innerHTML = '<div class="result-box success">Saved ' + coco.annotations.length + ' annotations across ' + keys.length + ' images</div>'; })
+        .catch(() => { status.innerHTML = '<div class="result-box error">Save failed</div>'; })
+        .finally(() => { btn.disabled = false; btn.textContent = 'Save All to COCO JSON'; });
+});
+</script>
+{% endblock %}

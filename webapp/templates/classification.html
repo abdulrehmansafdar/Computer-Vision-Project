@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Classification{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Classification</h1>
+    <p>Upload an image to classify the railway track defect type</p>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <input type="file" id="fileInput" accept="image/*" style="display:none;">
+            <div class="upload-zone" id="uploadZone">
+                <div class="icon">&#128247;</div>
+                <p><strong>Click</strong> or <strong>drag &amp; drop</strong> an image</p>
+            </div>
+            <div id="preview" style="display:none;margin-top:1rem;">
+                <div class="preview-container"><img id="previewImg"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card">
+            <h2>Prediction</h2>
+            <div id="result"></div>
+            <div id="probBars" style="margin-top:1rem;"></div>
+            <button class="btn btn-primary" id="predictBtn" style="display:none;margin-top:1rem;width:100%;">Classify</button>
+        </div>
+        <div class="card">
+            <h2>Model Status</h2>
+            <div class="result-box info">Train with <code>notebooks/classification.ipynb</code> on Colab</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const CLASSES = {{ classes | tojson }};
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const preview = document.getElementById('preview');
+const previewImg = document.getElementById('previewImg');
+const predictBtn = document.getElementById('predictBtn');
+const resultDiv = document.getElementById('result');
+const probBars = document.getElementById('probBars');
+let currentFile = null;
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('dragover'); if(e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', (e) => { if(e.target.files.length) loadFile(e.target.files[0]); });
+
+function loadFile(f) {
+    currentFile = f;
+    const r = new FileReader();
+    r.onload = (e) => { previewImg.src = e.target.result; preview.style.display = 'block'; predictBtn.style.display = 'block'; resultDiv.innerHTML = ''; probBars.innerHTML = ''; };
+    r.readAsDataURL(f);
+}
+
+predictBtn.addEventListener('click', () => {
+    if (!currentFile) return;
+    const fd = new FormData(); fd.append('file', currentFile);
+    resultDiv.innerHTML = '<div class="result-box info"><span class="spinner"></span> Classifying...</div>';
+    predictBtn.disabled = true;
+    fetch('/api/predict/classification', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(d => {
+            if (d.error) { resultDiv.innerHTML = '<div class="result-box error">' + d.error + '</div>'; return; }
+            resultDiv.innerHTML = '<div class="result-box success"><strong>' + d.prediction + '</strong> &middot; ' + (d.confidence * 100).toFixed(1) + '% confidence</div>';
+            probBars.innerHTML = '<h3 style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;">Per-class probabilities</h3>' +
+                Object.entries(d.all_probs).sort((a,b) => b[1]-a[1]).map(([cls, prob]) => {
+                    const pct = (prob * 100).toFixed(1);
+                    return '<div style="margin-bottom:0.5rem;"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:0.15rem;"><span>' + cls + '</span><span>' + pct + '%</span></div><div class="progress-bar"><div class="fill" style="width:' + pct + '%"></div></div></div>';
+                }).join('');
+        })
+        .catch(() => { resultDiv.innerHTML = '<div class="result-box error">Prediction failed</div>'; })
+        .finally(() => { predictBtn.disabled = false; });
+});
+</script>
+{% endblock %}

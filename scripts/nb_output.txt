@@ -1,0 +1,366 @@
+
+=== Cell 2 ===
+PyTorch version: 2.11.0+cu128
+CUDA available: True
+GPU device: Tesla T4
+VRAM: 14.6 GB
+
+
+=== Cell 4 ===
+Dataset URL: https://www.kaggle.com/datasets/nomihsa965/large-scale-image-dataset-of-wood-surface-defects
+License(s): Attribution 4.0 International (CC BY 4.0)
+Downloading large-scale-image-dataset-of-wood-surface-defects.zip to /content
+100% 3.09G/3.09G [03:03<00:00, 18.1MB/s]
+
+Extracting large-scale-image-dataset-of-wood-surface-defects.zip...
+Dataset: 4000 images, 4000 labels
+
+
+=== Cell 6 ===
+Total images found: 4000
+Total label files found: 4000
+
+Number of classes: 8
+Empty label files (no defects): 388
+Total annotations: 9211
+
+Class                ID   Count    %       
+--------------------------------------------
+Quartzity            0    171      1.9%  
+Live_Knot            1    4070     44.2%  ██████████████████████
+Marrow               2    206      2.2%  █
+Resin                3    650      7.1%  ███
+Dead_Knot            4    2934     31.9%  ███████████████
+Knot_with_crack      5    542      5.9%  ██
+Knot_missing         6    121      1.3%  
+Crack                7    517      5.6%  ██
+
+Median annotation count: 542
+Minority threshold (<271):
+  Quartzity (ID 0): 171 annotations
+  Marrow (ID 2): 206 annotations
+  Knot_missing (ID 6): 121 annotations
+
+Majority classes (no augmentation needed):
+  Live_Knot (ID 1): 4070 annotations
+  Resin (ID 3): 650 annotations
+  Dead_Knot (ID 4): 2934 annotations
+  Knot_with_crack (ID 5): 542 annotations
+  Crack (ID 7): 517 annotations
+
+
+=== Cell 7 ===
+Source images: /content/wood_defect_dataset/Images - 1/Images - 1
+Source labels: /content/wood_defect_dataset/Bounding Boxes - YOLO Format - 1/Bounding Boxes - YOLO Format - 1
+Total image-label pairs: 4000
+
+Split sizes:
+  train: 3200
+  val: 400
+  test: 400
+
+Files organized into YOLO directory structure at /content/wood_yolo
+  train: 3200 images, 3200 labels
+  val: 400 images, 400 labels
+  test: 400 images, 400 labels
+
+
+=== Cell 8 ===
+data.yaml created:
+============================================================
+names:
+- Quartzity
+- Live_Knot
+- Marrow
+- Resin
+- Dead_Knot
+- Knot_with_crack
+- Knot_missing
+- Crack
+nc: 8
+path: /content/wood_yolo
+test: images/test
+train: images/train
+val: images/val
+
+============================================================
+
+Classes: ['Quartzity', 'Live_Knot', 'Marrow', 'Resin', 'Dead_Knot', 'Knot_with_crack', 'Knot_missing', 'Crack']
+
+
+=== Cell 10 ===
+Training set annotation counts (before augmentation):
+  Quartzity: 116
+  Live_Knot: 3242
+  Marrow: 166
+  Resin: 541
+  Dead_Knot: 2372
+  Knot_with_crack: 412
+  Knot_missing: 97
+  Crack: 410
+
+Median annotation count (non-zero): 412
+Target per-class: 412
+Quartzity: created 296 new annotations (from 91 source images, 4x each)
+Marrow: created 246 new annotations (from 153 source images, 2x each)
+Knot_missing: created 315 new annotations (from 89 source images, 4x each)
+
+Total augmented images created: 781
+
+Final training annotation counts:
+  Quartzity: 116 -> 445 (+329)
+  Live_Knot: 3242 -> 3969 (+727)
+  Marrow: 166 -> 455 (+289)
+  Resin: 541 -> 682 (+141)
+  Dead_Knot: 2372 -> 2854 (+482)
+  Knot_with_crack: 412 -> 448 (+36)
+  Knot_missing: 97 -> 420 (+323)
+  Crack: 410 -> 574 (+164)
+
+Total training images after augmentation: 3981
+
+
+=== Cell 11 ===
+Augmented data.yaml created:
+names:
+- Quartzity
+- Live_Knot
+- Marrow
+- Resin
+- Dead_Knot
+- Knot_with_crack
+- Knot_missing
+- Crack
+nc: 8
+path: /content/wood_yolo_augmented
+test: images/test
+train: images/train
+val: images/val
+
+
+
+=== Cell 13 ===
+Creating new Ultralytics Settings v0.0.6 file ✅ 
+View Ultralytics Settings with 'yolo settings' or at '/root/.config/Ultralytics/settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.pt to 'yolov8n.pt': 100% ━━━━━━━━━━━━ 6.2MB 224.2MB/s 0.0s
+Starting training...
+Model: YOLOv8n
+Data: /content/wood_yolo_augmented/data.yaml
+Epochs: 20
+Image size: 640
+Device: 0 (GPU)
+============================================================
+Ultralytics 8.4.62 🚀 Python-3.12.13 torch-2.11.0+cu128 CUDA:0 (Tesla T4, 14913MiB)
+[34m[1mengine/trainer: [0magnostic_nms=False, amp=True, angle=1.0, augment=False, auto_augment=randaugment, batch=16, bgr=0.0, box=7.5, cache=False, cfg=None, classes=None, close_mosaic=10, cls=0.5, cls_pw=0.0, compile=False, conf=None, copy_paste=0.0, copy_paste_mode=flip, cos_lr=False, cutmix=0.0, data=/content/wood_yolo_augmented/data.yaml, degrees=0.0, deterministic=True, device=0, dfl=1.5, dnn=False, dropout=0.0, dynamic=False, embed=None, end2end=None, epochs=20, erasing=0.4, exist_ok=False, fliplr=0.5, flipud=0.0, format=torchscript, fraction=1.0, freeze=None, half=False, hsv_h=0.015, hsv_s=0.7, hsv_v=0.4, imgsz=640, int8=False, iou=0.7, keras=False, kobj=1.0, line_width=None, lr0=0.01, lrf=0.01, mask_ratio=4, max_det=300, mixup=0.0, mode=train, model=yolov8n.pt, momentum=0.937, mosaic=1.0, multi_scale=0.0, name=train, nbs=64, nms=False, opset=None, optimize=False, optimizer=auto, overlap_mask=True, patience=10, perspective=0.0, plots=True, pose=12.0, pretrained=True, profile=False, project=None, rect=False, resume=False, retina_masks=False, rle=1.0, save=True, save_conf=False, save_crop=False, save_dir=/content/runs/detect/train, save_frames=False, save_json=False, save_period=-1, save_txt=False, scale=0.5, seed=0, shear=0.0, show=False, show_boxes=True, show_conf=True, show_labels=True, simplify=True, single_cls=False, source=None, split=val, stream_buffer=False, task=detect, time=None, tracker=botsort.yaml, translate=0.1, val=True, verbose=True, vid_stride=1, visualize=False, warmup_bias_lr=0.1, warmup_epochs=3.0, warmup_momentum=0.8, weight_decay=0.0005, workers=2, workspace=None
+[KDownloading https://ultralytics.com/assets/Arial.ttf to '/root/.config/Ultralytics/Arial.ttf': 100% ━━━━━━━━━━━━ 755.1KB 179.6MB/s 0.0s
+Overriding model.yaml nc=80 with nc=8
+
+                   from  n    params  module                                       arguments                     
+  0                  -1  1       464  ultralytics.nn.modules.conv.Conv             [3, 16, 3, 2]                 
+  1                  -1  1      4672  ultralytics.nn.modules.conv.Conv             [16, 32, 3, 2]                
+  2                  -1  1      7360  ultralytics.nn.modules.block.C2f             [32, 32, 1, True]             
+  3                  -1  1     18560  ultralytics.nn.modules.conv.Conv             [32, 64, 3, 2]                
+  4                  -1  2     49664  ultralytics.nn.modules.block.C2f             [64, 64, 2, True]             
+  5                  -1  1     73984  ultralytics.nn.modules.conv.Conv             [64, 128, 3, 2]               
+  6                  -1  2    197632  ultralytics.nn.modules.block.C2f             [128, 128, 2, True]           
+  7                  -1  1    295424  ultralytics.nn.modules.conv.Conv             [128, 256, 3, 2]              
+  8                  -1  1    460288  ultralytics.nn.modules.block.C2f             [256, 256, 1, True]           
+  9                  -1  1    164608  ultralytics.nn.modules.block.SPPF            [256, 256, 5]                 
+ 10                  -1  1         0  torch.nn.modules.upsampling.Upsample         [None, 2, 'nearest']          
+ 11             [-1, 6]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 12                  -1  1    148224  ultralytics.nn.modules.block.C2f             [384, 128, 1]                 
+ 13                  -1  1         0  torch.nn.modules.upsampling.Upsample         [None, 2, 'nearest']          
+ 14             [-1, 4]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 15                  -1  1     37248  ultralytics.nn.modules.block.C2f             [192, 64, 1]                  
+ 16                  -1  1     36992  ultralytics.nn.modules.conv.Conv             [64, 64, 3, 2]                
+ 17            [-1, 12]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 18                  -1  1    123648  ultralytics.nn.modules.block.C2f             [192, 128, 1]                 
+ 19                  -1  1    147712  ultralytics.nn.modules.conv.Conv             [128, 128, 3, 2]              
+ 20             [-1, 9]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 21                  -1  1    493056  ultralytics.nn.modules.block.C2f             [384, 256, 1]                 
+ 22        [15, 18, 21]  1    752872  ultralytics.nn.modules.head.Detect           [8, 16, None, [64, 128, 256]] 
+Model summary: 130 layers, 3,012,408 parameters, 3,012,392 gradients, 8.2 GFLOPs
+
+Transferred 319/355 items from pretrained weights
+Freezing layer 'model.22.dfl.conv.weight'
+[34m[1mAMP: [0mrunning Automatic Mixed Precision (AMP) checks...
+[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt to 'yolo26n.pt': 100% ━━━━━━━━━━━━ 5.3MB 286.2MB/s 0.0s
+[34m[1mAMP: [0mchecks passed ✅
+[34m[1mtrain: [0mFast image access ✅ (ping: 0.0±0.0 ms, read: 528.6±585.3 MB/s, size: 759.9 KB)
+[K[34m[1mtrain: [0mScanning /content/wood_yolo_augmented/labels/train... 3981 images, 311 backgrounds, 0 corrupt: 100% ━━━━━━━━━━━━ 3981/3981 650.1it/s 6.1s
+[34m[1mtrain: [0mNew cache created: /content/wood_yolo_augmented/labels/train.cache
+[34m[1malbumentations: [0mBlur(p=0.01, blur_limit=(3, 7)), MedianBlur(p=0.01, blur_limit=(3, 7)), ToGray(p=0.01, method='weighted_average', num_output_channels=3), CLAHE(p=0.01, clip_limit=(1.0, 4.0), tile_grid_size=(8, 8))
+[34m[1mval: [0mFast image access ✅ (ping: 0.0±0.0 ms, read: 1757.4±1484.7 MB/s, size: 794.6 KB)
+[K[34m[1mval: [0mScanning /content/wood_yolo_augmented/labels/val... 400 images, 34 backgrounds, 0 corrupt: 100% ━━━━━━━━━━━━ 400/400 1.8Kit/s 0.2s
+[34m[1mval: [0mNew cache created: /content/wood_yolo_augmented/labels/val.cache
+[34m[1moptimizer:[0m 'optimizer=auto' found, ignoring 'lr0=0.01' and 'momentum=0.937' and determining best 'optimizer', 'lr0' and 'momentum' automatically... 
+[34m[1moptimizer:[0m AdamW(lr=0.000833, momentum=0.9) with parameter groups 57 weight(decay=0.0), 64 weight(decay=0.0005), 63 bias(decay=0.0)
+Plotting labels to /content/runs/detect/train/labels.jpg... 
+Image sizes 640 train, 640 val
+Using 2 dataloader workers
+Logging results to [1m/content/runs/detect/train[0m
+Starting training for 20 epochs...
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       1/20      2.03G       1.98      2.997      1.227         13        640: 100% ━━━━━━━━━━━━ 249/249 1.9it/s 2:13
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 1.8it/s 7.4s
+                   all        400        929      0.368      0.488      0.361      0.176
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       2/20      2.03G      1.816      1.933       1.16         13        640: 100% ━━━━━━━━━━━━ 249/249 2.0it/s 2:03
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.6it/s 5.0s
+                   all        400        929      0.453      0.509      0.458      0.218
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       3/20      2.04G      1.793      1.673      1.148         13        640: 100% ━━━━━━━━━━━━ 249/249 2.1it/s 1:58
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.4it/s 5.4s
+                   all        400        929      0.439      0.553      0.435      0.208
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       4/20      2.04G      1.758      1.516      1.136         13        640: 100% ━━━━━━━━━━━━ 249/249 2.1it/s 1:56
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 1.8it/s 7.1s
+                   all        400        929       0.47      0.486      0.462      0.225
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       5/20      2.04G      1.726      1.426      1.117         13        640: 100% ━━━━━━━━━━━━ 249/249 2.1it/s 1:56
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.4it/s 5.5s
+                   all        400        929      0.515      0.614      0.564      0.298
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       6/20      2.04G      1.705      1.364      1.107         13        640: 100% ━━━━━━━━━━━━ 249/249 2.1it/s 1:57
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.5it/s 5.3s
+                   all        400        929       0.47      0.629      0.554      0.288
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       7/20      2.04G      1.691      1.311      1.104         13        640: 100% ━━━━━━━━━━━━ 249/249 2.1it/s 1:57
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.0it/s 6.4s
+                   all        400        929      0.524      0.603      0.541      0.284
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       8/20      2.04G      1.665      1.261      1.087         13        640: 100% ━━━━━━━━━━━━ 249/249 2.1it/s 1:57
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.2it/s 5.9s
+                   all        400        929      0.578      0.561       0.57      0.303
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K       9/20      2.04G      1.654      1.244      1.086         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:56
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.3it/s 5.7s
+                   all        400        929      0.562      0.596       0.57      0.301
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      10/20      2.04G      1.629      1.194      1.075         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:56
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.2it/s 6.0s
+                   all        400        929      0.608      0.571      0.601      0.318
+Closing dataloader mosaic
+[34m[1malbumentations: [0mBlur(p=0.01, blur_limit=(3, 7)), MedianBlur(p=0.01, blur_limit=(3, 7)), ToGray(p=0.01, method='weighted_average', num_output_channels=3), CLAHE(p=0.01, clip_limit=(1.0, 4.0), tile_grid_size=(8, 8))
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      11/20      2.04G      1.617      1.195        1.1         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:55
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.0it/s 6.6s
+                   all        400        929      0.565      0.613      0.592      0.317
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      12/20      2.04G      1.602       1.14      1.082         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:53
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 1.9it/s 7.0s
+                   all        400        929      0.618       0.63      0.604      0.334
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      13/20      2.04G      1.591      1.119      1.084         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:55
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.1it/s 6.2s
+                   all        400        929      0.596      0.608        0.6      0.328
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      14/20      2.04G      1.567        1.1      1.074         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:54
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.2it/s 6.0s
+                   all        400        929      0.645      0.601      0.615      0.344
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      15/20      2.04G      1.546      1.063      1.065         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:55
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.6it/s 4.9s
+                   all        400        929      0.709      0.588      0.638      0.347
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      16/20      2.04G      1.523       1.03      1.056         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:54
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.3it/s 5.7s
+                   all        400        929      0.618      0.643      0.623      0.339
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      17/20      2.04G      1.517      1.002      1.051         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:53
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.3it/s 5.5s
+                   all        400        929      0.694      0.627      0.647      0.362
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      18/20      2.04G      1.484     0.9723       1.04         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:55
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.5it/s 5.2s
+                   all        400        929      0.633      0.658      0.632      0.359
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      19/20      2.04G      1.466       0.94      1.033         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:53
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.6it/s 5.1s
+                   all        400        929      0.664      0.645      0.639      0.367
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+[K      20/20      2.04G       1.45     0.9202       1.03         13        640: 100% ━━━━━━━━━━━━ 249/249 2.2it/s 1:53
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 2.4it/s 5.4s
+                   all        400        929      0.687      0.641      0.644      0.366
+
+20 epochs completed in 0.684 hours.
+Optimizer stripped from /content/runs/detect/train/weights/last.pt, 6.2MB
+Optimizer stripped from /content/runs/detect/train/weights/best.pt, 6.2MB
+
+Validating /content/runs/detect/train/weights/best.pt...
+Ultralytics 8.4.62 🚀 Python-3.12.13 torch-2.11.0+cu128 CUDA:0 (Tesla T4, 14913MiB)
+Model summary (fused): 73 layers, 3,007,208 parameters, 0 gradients, 8.1 GFLOPs
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 13/13 1.6it/s 8.1s
+                   all        400        929      0.665      0.643      0.639      0.368
+             Quartzity         22         30      0.345      0.167      0.155     0.0909
+             Live_Knot        227        420      0.759      0.742      0.752      0.359
+                Marrow         17         18      0.631      0.833      0.668      0.487
+                 Resin         49         57      0.824      0.738        0.8      0.405
+             Dead_Knot        188        274      0.872      0.768      0.852      0.461
+       Knot_with_crack         48         68       0.62      0.503      0.483      0.298
+          Knot_missing         11         12      0.688      0.667       0.72      0.443
+                 Crack         45         50      0.584       0.73       0.68      0.403
+Speed: 0.2ms preprocess, 1.5ms inference, 0.0ms loss, 2.4ms postprocess per image
+Results saved to [1m/content/runs/detect/train[0m
+============================================================
+Training complete!
+
+
+=== Cell 15 ===
+Model exported to /content/best.pt
+  Source: /content/runs/detect/train/weights/best.pt
+  Size: 5.9 MB
+
+
+=== Cell 17 ===
+Mounted at /content/drive
+Model uploaded to Google Drive at: /content/drive/MyDrive/wood_defect_model/best.pt
+
+
+=== Cell 19 ===
+
+--- Sample 1: 112800023.jpg ---
+Detections: 2
+  Dead_Knot: 88.69%
+  Crack: 59.62%
+
+<PIL.Image.Image image mode=RGB size=2800x1024>
+
+--- Sample 2: 101900003.jpg ---
+Detections: 3
+  Marrow: 75.40%
+  Live_Knot: 47.79%
+  Live_Knot: 25.08%
+
+<PIL.Image.Image image mode=RGB size=2800x1024>
+
+--- Sample 3: 100400005.jpg ---
+Detections: 2
+  Marrow: 89.31%
+  Crack: 50.96%
+
+<PIL.Image.Image image mode=RGB size=2781x1024>
+
+Inference test complete!
+
